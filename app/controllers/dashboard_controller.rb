@@ -66,12 +66,16 @@ class DashboardController < ApplicationController
       return
     end
 
+    # Clear existing data and fetch fresh
+    AgencySnapshot.delete_all
+    Agency.delete_all
+
     dates = [ start_date, end_date ].compact.uniq.sort
     ingestor = EcfrIngestor.new
 
     dates.each { |date| ingestor.ingest_all(snapshot_date: date) }
 
-    redirect_to dashboard_path, notice: "Ingested data for #{dates.map { |d| d.strftime('%b %d, %Y') }.join(' and ')}"
+    redirect_to dashboard_path, notice: "Fetched data for #{dates.map { |d| d.strftime('%b %d, %Y') }.join(' → ')}"
   rescue StandardError => e
     redirect_to dashboard_path, alert: "Error: #{e.message}"
   end
