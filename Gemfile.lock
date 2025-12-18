@@ -144,7 +144,8 @@ GEM
     matrix (0.4.3)
     mini_mime (1.1.5)
     mini_portile2 (2.8.9)
-    minitest (5.27.0)
+    minitest (6.0.0)
+      prism (~> 1.5)
     msgpack (1.8.0)
     multi_xml (0.6.0)
     net-imap (0.6.2)
@@ -334,7 +335,7 @@ DEPENDENCIES
   httparty
   importmap-rails
   jbuilder
-  minitest (~> 5.0)
+  minitest (~> 6.0)
   nokogiri
   pg
   puma (>= 5.0)
