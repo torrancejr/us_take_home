@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+/* Custom theme configuration */
+@theme {
+  --font-family-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-family-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* Smooth animations */
+@layer base {
+  * {
+    @apply scroll-smooth;
+  }
+
+  ::selection {
+    @apply bg-emerald-500/30 text-white;
+  }
+}
+
+/* Custom components */
+@layer components {
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+}
+
+/* Utility classes */
+@layer utilities {
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}

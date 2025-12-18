@@ -1,0 +1,176 @@
+<% content_for :title, "Dashboard | eCFR Analyzer" %>
+
+<!-- Hero Stats -->
+<div class="mb-10">
+  <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
+    <div>
+      <h1 class="text-3xl font-bold text-white mb-2">Federal Regulations Dashboard</h1>
+      <p class="text-slate-400">Analyzing the Electronic Code of Federal Regulations</p>
+    </div>
+    <div class="flex flex-col gap-2 items-end">
+      <!-- Date Picker -->
+      <%= form_with url: dashboard_ingest_path, method: :post, data: { turbo: false }, class: "flex items-center gap-2 px-3 py-2 bg-slate-800/50 rounded-xl border border-slate-700/50" do %>
+        <input type="date" name="start_date" value="2024-12-15" max="2025-12-15" class="px-2 py-1 text-xs bg-slate-700 border-0 rounded-lg text-white w-[115px]">
+        <span class="text-slate-500">→</span>
+        <input type="date" name="end_date" value="2025-12-15" max="2025-12-15" class="px-2 py-1 text-xs bg-slate-700 border-0 rounded-lg text-white w-[115px]">
+        <button type="submit" onclick="this.innerHTML='⏳ Loading...'; this.disabled=true; this.form.submit();" class="px-3 py-1 text-xs bg-emerald-500 text-slate-950 font-medium rounded-lg hover:bg-emerald-400 disabled:opacity-50">Fetch</button>
+      <% end %>
+      <!-- Tracking Status -->
+      <% if @latest_date %>
+        <div class="flex items-center gap-2 px-4 py-2 bg-slate-800/50 rounded-xl border border-slate-700/50">
+          <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+          <span class="text-sm text-slate-400">Tracking:</span>
+          <span class="text-sm font-medium text-white">
+            <% if @oldest_date && @oldest_date != @latest_date %>
+              <%= @oldest_date.strftime("%b %d, %Y") %> → <%= @latest_date.strftime("%b %d, %Y") %>
+            <% else %>
+              <%= @latest_date.strftime("%B %d, %Y") %>
+            <% end %>
+          </span>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+    <div class="group relative overflow-hidden bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-2xl p-6 border border-slate-700/50 hover:border-emerald-500/30 transition-all duration-300">
+      <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+      <div class="relative">
+        <p class="text-sm font-medium text-slate-400 mb-1">Total Agencies</p>
+        <p class="text-4xl font-bold text-white tracking-tight"><%= @total_agencies %></p>
+      </div>
+    </div>
+
+    <div class="group relative overflow-hidden bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-2xl p-6 border border-slate-700/50 hover:border-cyan-500/30 transition-all duration-300">
+      <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+      <div class="relative">
+        <p class="text-sm font-medium text-slate-400 mb-1">Total Word Count</p>
+        <p class="text-4xl font-bold text-white tracking-tight"><%= number_with_delimiter(@total_word_count) %></p>
+      </div>
+    </div>
+
+    <div class="group relative overflow-hidden bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-2xl p-6 border border-slate-700/50 hover:border-violet-500/30 transition-all duration-300">
+      <div class="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+      <div class="relative">
+        <p class="text-sm font-medium text-slate-400 mb-1">Snapshots</p>
+        <p class="text-4xl font-bold text-white tracking-tight"><%= @agencies.sum { |a| a[:snapshot_count] } %></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Flash Messages -->
+<% if notice %>
+  <div class="mb-6 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-sm">
+    ✓ <%= notice %>
+  </div>
+<% end %>
+<% if alert %>
+  <div class="mb-6 p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-sm">
+    ⚠ <%= alert %>
+  </div>
+<% end %>
+
+<!-- Agencies Table -->
+<div class="bg-slate-900/50 rounded-2xl border border-slate-800/60 overflow-hidden">
+  <div class="px-6 py-4 border-b border-slate-800/60 flex items-center justify-between">
+    <h2 class="text-lg font-semibold text-white">Agency Metrics</h2>
+    <div class="text-xs text-slate-500">Industry scores = mentions per 10k words</div>
+  </div>
+
+  <% if @agencies.empty? %>
+    <div class="flex flex-col items-center justify-center py-16 px-6">
+      <div class="w-16 h-16 rounded-2xl bg-slate-800/60 flex items-center justify-center mb-4">
+        <svg class="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+        </svg>
+      </div>
+      <h3 class="text-lg font-medium text-white mb-2">No data yet</h3>
+      <p class="text-slate-400 text-sm text-center max-w-md mb-6">Run the ingestion task to populate agency data from the eCFR API.</p>
+      <code class="bg-slate-800/80 text-emerald-400 px-4 py-2 rounded-lg font-mono text-sm border border-slate-700/50">bin/rails ecfr:ingest</code>
+    </div>
+  <% else %>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead>
+          <tr class="text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th class="px-6 py-4">Agency</th>
+            <th class="px-6 py-4">Word Count</th>
+            <th class="px-6 py-4">Growth</th>
+            <th class="px-6 py-4">Top Industries Targeted</th>
+            <th class="px-6 py-4">Checksum</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800/40">
+          <% @agencies.each do |row| %>
+            <% a = row[:agency] %>
+            <% s = row[:latest] %>
+            <% industry_scores = row[:metrics]["industry_scores"] || {} %>
+            <tr class="group hover:bg-slate-800/30 transition-colors">
+              <td class="px-6 py-4">
+                <%= link_to dashboard_agency_path(a), class: "flex items-center gap-3 group/link" do %>
+                  <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center text-sm font-semibold text-slate-300 group-hover/link:from-emerald-500/20 group-hover/link:to-cyan-500/20 transition-all">
+                    <%= a.name[0..1].upcase %>
+                  </div>
+                  <div>
+                    <div class="font-medium text-white group-hover/link:text-emerald-400 transition-colors line-clamp-1"><%= a.name %></div>
+                    <div class="text-xs text-slate-500"><%= number_with_delimiter(s&.section_count || 0) %> sections</div>
+                  </div>
+                <% end %>
+              </td>
+              <td class="px-6 py-4">
+                <span class="font-semibold text-white"><%= s ? number_with_delimiter(s.word_count) : "—" %></span>
+              </td>
+              <td class="px-6 py-4">
+                <% growth = row[:growth_rate] %>
+                <% delta = row[:delta] %>
+                <div class="flex flex-col gap-1">
+                  <% if growth.nil? %>
+                    <span class="text-slate-500 text-sm">—</span>
+                  <% elsif growth > 0 %>
+                    <span class="inline-flex items-center gap-1 text-emerald-400 font-medium">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                      </svg>
+                      +<%= growth %>%
+                    </span>
+                  <% elsif growth < 0 %>
+                    <span class="inline-flex items-center gap-1 text-rose-400 font-medium">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                      </svg>
+                      <%= growth %>%
+                    </span>
+                  <% else %>
+                    <span class="text-slate-400">0%</span>
+                  <% end %>
+                  <% if delta && delta != 0 %>
+                    <span class="text-xs text-slate-500"><%= delta > 0 ? '+' : '' %><%= number_with_delimiter(delta) %> words</span>
+                  <% end %>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex flex-wrap gap-1.5">
+                  <% top_industries(industry_scores, limit: 3).each do |key, data| %>
+                    <%= industry_badge(key, data["score"], size: :xs) %>
+                  <% end %>
+                  <% if industry_scores.empty? %>
+                    <span class="text-slate-500 text-xs">—</span>
+                  <% end %>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <% if s&.checksum_sha256 %>
+                  <code class="text-xs font-mono text-slate-500 bg-slate-800/50 px-2 py-1 rounded"><%= s.checksum_sha256[0..11] %>…</code>
+                <% else %>
+                  <span class="text-slate-500">—</span>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</div>
