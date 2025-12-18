@@ -76,6 +76,22 @@ class DashboardController < ApplicationController
     redirect_to dashboard_path, alert: "Error: #{e.message}"
   end
 
+  # One-time seed endpoint for production (no shell access)
+  def seed
+    if AgencySnapshot.count > 0
+      redirect_to dashboard_path, notice: "Data already exists (#{AgencySnapshot.count} snapshots)"
+      return
+    end
+
+    ingestor = EcfrIngestor.new
+    ingestor.ingest_all(snapshot_date: Date.parse("2024-12-15"))
+    ingestor.ingest_all(snapshot_date: Date.parse("2025-12-15"))
+
+    redirect_to dashboard_path, notice: "Seeded data for 2024-12-15 and 2025-12-15"
+  rescue StandardError => e
+    redirect_to dashboard_path, alert: "Seed error: #{e.message}"
+  end
+
   private
 
   def calculate_growth_rate(oldest, latest)

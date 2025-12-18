@@ -7,6 +7,7 @@ Rails.application.routes.draw do
   # Dashboard routes
   get "/dashboard", to: "dashboard#index", as: :dashboard
   post "/dashboard/ingest", to: "dashboard#ingest", as: :dashboard_ingest
+  get "/dashboard/seed", to: "dashboard#seed", as: :dashboard_seed
   get "/dashboard/:id", to: "dashboard#show", as: :dashboard_agency
 
   # API routes
