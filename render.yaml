@@ -1,0 +1,27 @@
+databases:
+  - name: ecfr-db
+    plan: free
+    databaseName: ecfr_production
+
+services:
+  - type: web
+    name: ecfr-analyzer
+    runtime: ruby
+    plan: free
+    buildCommand: |
+      bundle install
+      bundle exec rails db:migrate
+      bundle exec rails assets:precompile
+    startCommand: bundle exec puma -C config/puma.rb
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ecfr-db
+          property: connectionString
+      - key: RAILS_MASTER_KEY
+        sync: false
+      - key: RAILS_ENV
+        value: production
+      - key: RAILS_LOG_TO_STDOUT
+        value: "true"
+
